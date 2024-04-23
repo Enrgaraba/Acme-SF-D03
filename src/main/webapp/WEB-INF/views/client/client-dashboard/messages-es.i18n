@@ -1,0 +1,15 @@
+# messages-es.i18n
+
+
+client.client-dashboard.form.title = Panel de indicadores de cliente
+
+client.dashboard.form.title.general-indicators = Indicadores generales
+
+client.dashboard.form.label.number-Of-Progress-Logs-Under-25 = Porcentage del total de registro de progreso completados menor a 25
+client.dashboard.form.label.number-Of-Progress-Logs-Between-25-And-50 = Porcentage del total de registro de progreso completados entre 25 y 50
+client.dashboard.form.label.number-Of-Progress-Logs-Between-50-And-75 = Porcentage del total de registro de progreso completados entre 50 y 75
+client.dashboard.form.number-Of-Progress-Logs-Above-75 = Porcentage del total de registro de progreso completados mayor al 75
+client.dashboard.form.label.average-Budget =  La media de presupuesto de los contratos
+client.dashboard.form.label.deviation-Budget = Desviación típica de los presupuestos de los contratos
+client.dashboard.form.label.minimum-Budget = Mínimo presupuesto de los contratos
+client.dashboard.form.label.maximum-Budget = Máximo presupuesto de los contratos

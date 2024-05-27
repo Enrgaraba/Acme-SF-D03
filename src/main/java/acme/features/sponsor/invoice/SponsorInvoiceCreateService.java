@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import acme.client.data.models.Dataset;
 import acme.client.helpers.MomentHelper;
 import acme.client.services.AbstractService;
-import acme.entities.components.AuxiliarService;
 import acme.entities.invoice.Invoice;
 import acme.entities.sponsorship.Sponsorship;
 import acme.roles.Sponsor;
@@ -21,10 +20,7 @@ public class SponsorInvoiceCreateService extends AbstractService<Sponsor, Invoic
 	// Internal state ---------------------------------------------------------
 
 	@Autowired
-	protected SponsorInvoiceRepository	repository;
-
-	@Autowired
-	private AuxiliarService				auxiliarService;
+	protected SponsorInvoiceRepository repository;
 
 	// AbstractService interface ----------------------------------------------
 
@@ -66,7 +62,7 @@ public class SponsorInvoiceCreateService extends AbstractService<Sponsor, Invoic
 			Invoice existing;
 
 			existing = this.repository.findInvoiceByCode(object.getCode()).orElse(null);
-			super.state(existing == null || existing.equals(object), "code", "sponsor.invoice.form.error.duplicated");
+			super.state(existing == null, "code", "sponsor.invoice.form.error.duplicated");
 		}
 
 		// Due date  ---------------------------------------------------------
@@ -96,13 +92,9 @@ public class SponsorInvoiceCreateService extends AbstractService<Sponsor, Invoic
 		if (!super.getBuffer().getErrors().hasErrors("quantity"))
 			super.state(object.getQuantity().getAmount() <= 10000000, "quantity", "sponsor.invoice.form.error.maxQuantity");
 
-		if (!super.getBuffer().getErrors().hasErrors("quatity") && object.getQuantity() != null)
+		if (!super.getBuffer().getErrors().hasErrors("quantity") && object.getQuantity() != null)
 			super.state(object.getQuantity().getCurrency().trim().toLowerCase().equals(object.getSponsorship().getAmount().getCurrency().trim().toLowerCase()), "quantity", "sponsor.invoice.form.error.invalidCurrency");
 
-		// totalAmount  ---------------------------------------------------------
-
-		if (!super.getBuffer().getErrors().hasErrors("totalAmount") && object.getQuantity() != null)
-			super.state(object.totalAmount().getAmount() <= object.getSponsorship().getAmount().getAmount(), "*", "sponsor.invoice.form.error.totalAmountTooHigh");
 	}
 
 	@Override
@@ -118,7 +110,6 @@ public class SponsorInvoiceCreateService extends AbstractService<Sponsor, Invoic
 		Dataset dataset;
 
 		dataset = super.unbind(object, "code", "registrationTime", "dueDate", "quantity", "tax", "link", "published");
-		dataset.put("money", this.auxiliarService.changeCurrency(object.totalAmount()));
 		dataset.put("sponsorshipCode", object.getSponsorship().getCode());
 
 		super.getResponse().addData(dataset);

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import acme.client.data.models.Dataset;
 import acme.client.helpers.MomentHelper;
 import acme.client.services.AbstractService;
-import acme.entities.components.AuxiliarService;
 import acme.entities.invoice.Invoice;
 import acme.roles.Sponsor;
 
@@ -22,10 +21,7 @@ public class SponsorInvoicePublishService extends AbstractService<Sponsor, Invoi
 	// Internal state ---------------------------------------------------------
 
 	@Autowired
-	private SponsorInvoiceRepository	repository;
-
-	@Autowired
-	private AuxiliarService				auxiliarService;
+	private SponsorInvoiceRepository repository;
 
 	// AbstractService interface ----------------------------------------------
 
@@ -43,7 +39,8 @@ public class SponsorInvoicePublishService extends AbstractService<Sponsor, Invoi
 		sponsor = invoice == null ? null : invoice.getSponsorship().getSponsor();
 		sponsorRequestId = super.getRequest().getPrincipal().getActiveRoleId();
 		if (sponsor != null)
-			status = !invoice.isPublished() && super.getRequest().getPrincipal().hasRole(sponsor) && sponsor.getId() == sponsorRequestId;
+			status = !invoice.isPublished() && super.getRequest().getPrincipal().hasRole(sponsor) &&//
+				sponsor.getId() == sponsorRequestId;
 		else
 			status = false;
 
@@ -110,17 +107,13 @@ public class SponsorInvoicePublishService extends AbstractService<Sponsor, Invoi
 		if (!super.getBuffer().getErrors().hasErrors("quantity"))
 			super.state(object.getQuantity().getAmount() <= 10000000, "quantity", "sponsor.invoice.form.error.maxQuantity");
 
-		if (!super.getBuffer().getErrors().hasErrors("quatity") && object.getQuantity() != null)
+		if (!super.getBuffer().getErrors().hasErrors("quantity"))
 			super.state(object.getQuantity().getCurrency().trim().toLowerCase().equals(object.getSponsorship().getAmount().getCurrency().trim().toLowerCase()), "quantity", "sponsor.invoice.form.error.invalidCurrency");
-
-		// totalAmount  ---------------------------------------------------------
-
-		if (!super.getBuffer().getErrors().hasErrors("totalAmount") && object.getQuantity() != null)
-			super.state(object.totalAmount().getAmount() <= object.getSponsorship().getAmount().getAmount(), "*", "sponsor.invoice.form.error.totalAmountTooHigh");
 
 		// solo en el publish  ---------------------------------------------------------
 
-		if (!super.getBuffer().getErrors().hasErrors("invoices") && object.getQuantity() != null) {
+		if (!super.getBuffer().getErrors().hasErrors("invoices") &&//
+			object.getQuantity() != null) {
 			double invoicesAmount;
 			double totalAmount;
 			if (!publishedInvoices.isEmpty())
@@ -130,6 +123,10 @@ public class SponsorInvoicePublishService extends AbstractService<Sponsor, Invoi
 			totalAmount = invoicesAmount + object.getQuantity().getAmount();
 			super.state(totalAmount <= object.getSponsorship().getAmount().getAmount(), "*", "sponsor.invoice.form.error.tooMuchMoney");
 		}
+
+		if (!super.getBuffer().getErrors().hasErrors("totalAmount") && //
+			object.getQuantity() != null)
+			super.state(object.totalAmount().getAmount() <= object.getSponsorship().getAmount().getAmount(), "*", "sponsor.invoice.form.error.totalAmountTooHigh");
 
 		if (!super.getBuffer().getErrors().hasErrors("invoices"))
 			super.state(!object.getSponsorship().isPublished(), "*", "sponsor.invoice.form.error.publishedSponsorship");
@@ -153,7 +150,6 @@ public class SponsorInvoicePublishService extends AbstractService<Sponsor, Invoi
 		dataset = super.unbind(object, "code", "registrationTime", "dueDate", "quantity", "tax", "link", "published");
 		dataset.put("totalAmount", object.totalAmount());
 		dataset.put("sponsorshipCode", object.getSponsorship().getCode());
-		dataset.put("money", this.auxiliarService.changeCurrency(object.totalAmount()));
 
 		super.getResponse().addData(dataset);
 	}

@@ -2,8 +2,8 @@
 package acme.features.administrator.banner;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -62,39 +62,31 @@ public class AdministratorBannerCreateService extends AbstractService<Administra
 		if (!this.getBuffer().getErrors().hasErrors("displayStartDate")) {
 			Date displayStartDate = object.getDisplayStartDate();
 			Date instantiationMoment = object.getInstantiationMoment();
+			Date minimumDuration = MomentHelper.deltaFromMoment(displayStartDate, 1, ChronoUnit.WEEKS);
 
 			super.state(MomentHelper.isAfter(displayStartDate, instantiationMoment), "displayStartDate", "administrator.banner.form.error.displayStartDate");
-			super.state(MomentHelper.isAfterOrEqual(displayStartDate, this.lowestMoment) && MomentHelper.isBeforeOrEqual(displayStartDate, this.topestMoment), "displayStartDate", "administrator.banner.form.error.badDiplayStartDate");
+			super.state(MomentHelper.isAfterOrEqual(displayStartDate, this.lowestMoment) && MomentHelper.isBeforeOrEqual(minimumDuration, this.topestMoment), "displayStartDate", "administrator.banner.form.error.badDiplayStartDate");
 		}
 		if (!this.getBuffer().getErrors().hasErrors("displayEndDate")) {
 			Date displayEndDate = object.getDisplayEndDate();
 			Date instantiationMoment = object.getInstantiationMoment();
+			Date minimumDuration1 = MomentHelper.deltaFromMoment(instantiationMoment, 1, ChronoUnit.WEEKS);
+			super.state(MomentHelper.isAfterOrEqual(displayEndDate, minimumDuration1), "displayEndDate", "administrator.banner.form.error.tooEarly");
+			super.state(MomentHelper.isBeforeOrEqual(displayEndDate, this.topestMoment), "displayEndDate", "administrator.banner.form.error.badDiplayEndDate");
+			if (object.getDisplayStartDate() != null) {
+				Date displayStartDate = object.getDisplayStartDate();
+				Date minimumDuration2 = MomentHelper.deltaFromMoment(displayStartDate, 1, ChronoUnit.WEEKS);
+				super.state(MomentHelper.isAfterOrEqual(displayEndDate, minimumDuration2), "displayEndDate", "administrator.banner.form.error.notTimeEnough");
 
-			super.state(MomentHelper.isAfter(displayEndDate, instantiationMoment), "displayStartDate", "administrator.banner.form.error.displayEndDate");
-			super.state(MomentHelper.isAfterOrEqual(displayEndDate, this.lowestMoment) && MomentHelper.isBeforeOrEqual(displayEndDate, this.topestMoment), "displayStartDate", "administrator.banner.form.error.badDiplayEndDate");
+			}
 		}
 
-		if (!this.getBuffer().getErrors().hasErrors("displayStartDate") && !this.getBuffer().getErrors().hasErrors("displayEndDate")) {
-			Date displayStartDate = object.getDisplayStartDate();
-			Date displayEndDate = object.getDisplayEndDate();
-
-			super.state(this.isPassedOneWeekAtLeast(displayEndDate, displayStartDate), "displayEndDate", "administrator.banner.form.error.notTimeEnough");
-		}
 		if (!this.getBuffer().getErrors().hasErrors("slogan")) {
 			SystemConfiguration sc = this.repository.findSystemConfiguration();
 
 			SpamFilter spam = new SpamFilter(sc.getSpamWords(), sc.getSpamThreshold());
 			super.state(!spam.isSpam(object.getSlogan()), "slogan", "administrator.banner.form.error.spam");
 		}
-	}
-
-	private boolean isPassedOneWeekAtLeast(final Date date1, final Date date2) {
-		boolean res = false;
-		long diffInMillies = date1.getTime() - date2.getTime();
-		long diffInDays = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-		if (diffInDays >= 7L)
-			res = true;
-		return res;
 	}
 
 	@Override
